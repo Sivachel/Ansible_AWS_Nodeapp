@@ -9,6 +9,9 @@
     keypair: DevOps250918
     region: eu-west-2
     count: 1
+    Name: Raj_Ansible_NodeApp
+    hoststring: "ansible_ssh_user=ubuntu ansible_ssh_private_key_file=~/.ssh/DevOps250918.pem "
+    hostpath: "./hosts"
   vars_files:
     - aws_keys.yml
 
@@ -48,13 +51,25 @@
           region: "{{ region }}"
           keypair: "{{ keypair }}"
           count: "{{count}}"
+          count_tag:
+            Name: "{{ Name }}"
+          instance_tags:
+            Name: "{{ Name }}"
         register: ec2
 
-      - name: Add the newly created host so that we can further contact it
-        add_host:
-          name: "{{ item.public_ip }}"
-          groups: webservers
+      - name: Add the newly created EC2 instance(s) to host group
+        lineinfile: dest={{ hostpath }}
+                    regexp={{ item.public_ip }}
+                    insertafter="[webservers]"
+                    line="{{ item.public_ip }} {{hoststring}}"
+                    state=present
         with_items: "{{ ec2.instances }}"
+
+      # - name: Add the newly created host so that we can further contact it
+      #   add_host:
+      #     name: "{{ item.public_ip }}"
+      #     groups: webservers
+      #   with_items: "{{ ec2.instances }}"
 
       - name: Add tag to Instance(s)
         ec2_tag:
@@ -68,9 +83,16 @@
           tags:
             Type: webserver
 
+      # - name: Wait for SSH to come up
+      #   wait_for:
+      #     host: "{{ item.public_ip }}"
+      #     port: 22
+      #     state: started
+      #   with_items: "{{ ec2.instances }}"
+
       - name: Wait for SSH to come up
-        wait_for:
-          host: "{{ item.public_ip }}"
-          port: 22
-          state: started
+        local_action: wait_for
+                      host={{ item.public_ip }}
+                      port=22
+                      state=started
         with_items: "{{ ec2.instances }}"
