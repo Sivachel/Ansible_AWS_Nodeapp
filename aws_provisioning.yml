@@ -6,7 +6,7 @@
     instance_type: t2.micro
     security_group: webservers_sg
     image: ami-0f49c6ee8f381746f
-    keypair: DevOpsStudents
+    keypair: DevOps250918
     region: eu-west-2
     count: 1
   vars_files:
@@ -37,7 +37,7 @@
             - proto: all
               cidr_ip: 0.0.0.0/0
 
-    - name: Launch the new EC2 Instance
+      - name: Launch the new EC2 Instance
         ec2:
           aws_access_key: "{{ AWS_ACCESS_KEY_ID }}"
           aws_secret_key: "{{ AWS_SECRET_ACCESS_KEY }}"
@@ -48,4 +48,29 @@
           region: "{{ region }}"
           keypair: "{{ keypair }}"
           count: "{{count}}"
-        register: ec2  
+        register: ec2
+
+      - name: Add the newly created host so that we can further contact it
+        add_host:
+          name: "{{ item.public_ip }}"
+          groups: webservers
+        with_items: "{{ ec2.instances }}"
+
+      - name: Add tag to Instance(s)
+        ec2_tag:
+          aws_access_key: "{{ AWS_ACCESS_KEY_ID }}"
+          aws_secret_key: "{{ AWS_SECRET_ACCESS_KEY }}"
+          resource: "{{ item.id }}"
+          region: "{{ region }}"
+          state: "present"
+        with_items: "{{ ec2.instances }}"
+        args:
+          tags:
+            Type: webserver
+
+      - name: Wait for SSH to come up
+        wait_for:
+          host: "{{ item.public_ip }}"
+          port: 22
+          state: started
+        with_items: "{{ ec2.instances }}"
