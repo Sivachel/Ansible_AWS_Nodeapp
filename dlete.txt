@@ -1,0 +1,3 @@
+https://www.bogotobogo.com/DevOps/Ansible/Ansible-aws-creating-ec2-instance.php
+
+https://www.linuxschoolonline.com/use-ansible-to-build-and-manage-aws-ec2-instances/
