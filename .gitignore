@@ -2,3 +2,4 @@ aws_keys.yml
 dlete.txt
 aws_provisioning.retry
 ec2_provisioning.retry
+mongo_provisioning.retry

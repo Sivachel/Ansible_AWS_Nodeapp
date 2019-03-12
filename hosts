@@ -1,4 +1,8 @@
 [local]
 localhost
 
-[webservers]
+[webserver]
+
+
+[mongoserver]
+ 
